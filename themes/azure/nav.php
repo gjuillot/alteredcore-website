@@ -46,6 +46,15 @@ if (!function_exists('__nav_active')) {
                 <span class="az-brand-name"><?= h(getSiteName()) ?></span>
             </a>
 
+            <!-- Card search (desktop; the mobile menu has its own): jumps to the Cards page filtered by name -->
+            <form class="az-search" role="search" method="get" action="<?= h(BASE_URL . '/pages/cards') ?>">
+                <div class="ac-input-icon">
+                    <?= ac_icon('search') ?>
+                    <input class="ac-input" type="search" name="q" autocomplete="off" enterkeyhint="search"
+                           placeholder="<?= h($_hTxt['search_card']) ?>" aria-label="<?= h($_hTxt['search_card']) ?>">
+                </div>
+            </form>
+
             <!-- Account button, opens #azAccountMenu (script below): sign in or the user's links, theme, language, beta -->
             <button class="az-account-btn" type="button" id="azAccountBtn"
                     aria-controls="azAccountMenu" aria-expanded="false"
@@ -182,6 +191,13 @@ foreach ($__navItems as $__ni) {
 ?>
 <div id="azMobileMenu" class="az-mobile-menu" hidden>
     <nav class="az-mm-nav" aria-label="<?= h($_hTxt['menu']) ?>">
+        <form class="az-mm-search" role="search" method="get" action="<?= h(BASE_URL . '/pages/cards') ?>">
+            <div class="ac-input-icon">
+                <?= ac_icon('search') ?>
+                <input class="ac-input" type="search" name="q" autocomplete="off" enterkeyhint="search"
+                       placeholder="<?= h($_hTxt['search_card']) ?>" aria-label="<?= h($_hTxt['search_card']) ?>">
+            </div>
+        </form>
         <?php if ($__mmLinks): ?>
         <div class="az-mm-links">
             <?php foreach ($__mmLinks as $__ni): ?>
@@ -394,7 +410,7 @@ foreach ($__navItems as $__ni) {
     var desktop = window.matchMedia('(min-width: 768px)');
     var steps   = ['az-nav-tight', 'az-nav-no-name'];
     var nav     = header.querySelector('.az-nav-list');
-    var ctrls   = header.querySelector('.az-account-btn');
+    var ctrls   = header.querySelector('.az-search') || header.querySelector('.az-account-btn');
     if (!nav || !ctrls) return;
     var items   = Array.prototype.slice.call(nav.children).reverse();
 

@@ -78,6 +78,9 @@ body > .site-wrapper { width: 100%; flex: 1 0 auto; }
 .az-account-label { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .az-account-caret { --ac-icon-size: 14px; color: var(--ac-header-control-caret); }
 
+/* Card search: in the bar on desktop, at the top of the burger menu on mobile */
+.az-search { display: none; }
+
 /* Row 2: menu */
 .az-navband { border-top: 1px solid var(--ac-header-divider); }
 @media (min-width: 768px) {
@@ -353,7 +356,15 @@ body > .site-wrapper { width: 100%; flex: 1 0 auto; }
     }
     .az-nav-list { flex-wrap: nowrap; align-self: stretch; gap: 0; }
     .az-site-header .az-nav-list .nav-link { height: auto; }
-    .az-site-header .az-account-btn { order: 2; }
+    .az-site-header .az-account-btn { order: 2; margin-left: 0; }
+    .az-site-header .az-search {
+        display: block;
+        order: 2;
+        flex: 0 1 240px;
+        min-width: 160px;
+        margin-left: auto;
+    }
+    .az-mm-search { display: none; }
     .az-site-header .az-brand,
     .az-site-header .az-navband { flex-shrink: 0; }
     .az-burger { order: 3; }
