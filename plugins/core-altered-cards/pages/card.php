@@ -3,6 +3,9 @@ require_once __DIR__ . '/../includes/functions.php';
 $lang   = getLang();
 $uiLang = getUiLang();
 $isLoggedIn = kcIsLoggedIn();
+// Lore editing: members of the « Lore » group and admins.
+$_userGroup  = $isLoggedIn ? adminGetUserGroup() : null;
+$canEditLore = $isLoggedIn && (isAdminUser() || ($_userGroup && in_array($_userGroup['slug'] ?? '', ['lore', 'admin'], true)));
 
 // Unique cards: renderer only supports en/fr. Non-unique: API supports en/fr/de/it/es.
 $_refParts    = explode('_', trim($_GET['ref'] ?? ''));
@@ -39,6 +42,15 @@ $txt = [
         'tab_rules'           => 'Rules',
         'tab_altered'         => 'Altered Cards',
         'tab_lore'            => 'Lore',
+        'lore_edit_btn'       => 'Edit',
+        'lore_edit_title'     => 'Edit the Lore',
+        'lore_flavor'         => 'Flavor text',
+        'lore_story'          => 'Story',
+        'lore_narrator'       => 'Narrator',
+        'lore_date'           => 'Date',
+        'lore_save'           => 'Save',
+        'lore_cancel'         => 'Cancel',
+        'lore_no_api'         => 'Saving is not available yet: the API is not ready.',
         'tab_deck'            => 'Deck',
         'deck_search_ph'      => 'Search a deck…',
         'deck_no_decks'       => 'You have no decks yet in',
@@ -91,6 +103,15 @@ $txt = [
         'tab_rules'           => 'Règles',
         'tab_altered'         => 'Cartes Altérées',
         'tab_lore'            => 'Lore',
+        'lore_edit_btn'       => 'Modifier',
+        'lore_edit_title'     => 'Modifier le Lore',
+        'lore_flavor'         => 'Texte d\'ambiance',
+        'lore_story'          => 'Histoire',
+        'lore_narrator'       => 'Narrateur',
+        'lore_date'           => 'Date',
+        'lore_save'           => 'Enregistrer',
+        'lore_cancel'         => 'Annuler',
+        'lore_no_api'         => 'L\'enregistrement n\'est pas encore disponible : l\'API n\'est pas prête.',
         'tab_deck'            => 'Deck',
         'deck_search_ph'      => 'Rechercher un deck…',
         'deck_no_decks'       => 'Vous n\'avez pas encore de deck',
@@ -268,6 +289,13 @@ $pageImage   = $ref ? CDN_URL . '/cards/assets/' . $_assetSet . '/' . $_assetRef
                             <div class="card-skeleton" style="height:1.3rem;width:58%;border-radius:var(--ac-radius-xs)"></div>
                         </div>
                     </div>
+                    <?php if ($canEditLore): ?>
+                    <div class="mt-3">
+                        <button type="button" id="card-lore-edit-btn" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#card-lore-modal">
+                            <?= ac_icon('pencil') ?> <?= h($txt['lore_edit_btn']) ?>
+                        </button>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <?php if ($isLoggedIn): ?>
@@ -303,6 +331,50 @@ $pageImage   = $ref ? CDN_URL . '/cards/assets/' . $_assetSet . '/' . $_assetRef
 
     <?php endif; ?>
 </div>
+
+<?php if ($canEditLore && $ref): ?>
+<!-- Lore edit modal (GUI only — no API to save yet) -->
+<div class="modal fade" id="card-lore-modal" tabindex="-1" aria-labelledby="card-lore-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <form class="modal-content" id="card-lore-form" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title" id="card-lore-modal-title"><?= h($txt['lore_edit_title']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= h($txt['lore_cancel']) ?>"></button>
+            </div>
+            <div class="modal-body d-flex flex-column gap-3">
+                <?php foreach (['en' => 'English', 'fr' => 'Français'] as $_ll => $_llName): ?>
+                <fieldset class="card-altered p-3 d-flex flex-column gap-3">
+                    <legend class="card-section-label mb-0 float-none w-auto"><?= h($_llName) ?></legend>
+                    <div class="ac-field">
+                        <label class="ac-field__label" for="card-lore-<?= $_ll ?>-flavor"><?= h($txt['lore_flavor']) ?></label>
+                        <textarea class="ac-textarea" id="card-lore-<?= $_ll ?>-flavor" rows="3"></textarea>
+                    </div>
+                    <div class="ac-field">
+                        <label class="ac-field__label" for="card-lore-<?= $_ll ?>-story"><?= h($txt['lore_story']) ?></label>
+                        <textarea class="ac-textarea" id="card-lore-<?= $_ll ?>-story" rows="5"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6 ac-field">
+                            <label class="ac-field__label" for="card-lore-<?= $_ll ?>-narrator"><?= h($txt['lore_narrator']) ?></label>
+                            <input type="text" class="ac-input" id="card-lore-<?= $_ll ?>-narrator">
+                        </div>
+                        <div class="col-sm-6 ac-field">
+                            <label class="ac-field__label" for="card-lore-<?= $_ll ?>-date"><?= h($txt['lore_date']) ?></label>
+                            <input type="text" class="ac-input" id="card-lore-<?= $_ll ?>-date">
+                        </div>
+                    </div>
+                </fieldset>
+                <?php endforeach; ?>
+                <div class="db-info-banner" id="card-lore-msg" style="display:none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?= h($txt['lore_cancel']) ?></button>
+                <button type="submit" class="btn btn-primary-altered btn-sm"><?= h($txt['lore_save']) ?></button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Altered Cards lightbox -->
 <div id="ac-lightbox" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--ac-color-overlay-strong);align-items:center;justify-content:center;cursor:pointer">
@@ -355,6 +427,7 @@ var AlteredCard = {
         'no_rulings'   => $txt['no_rulings'],
         'detail_label' => $txt['detail_label'],
         'loading'      => $txt['loading'],
+        'lore_no_api'  => $txt['lore_no_api'],
         'types'        => $txt['types'],
         'deck_search_ph'   => $txt['deck_search_ph'],
         'deck_no_decks'    => $txt['deck_no_decks'],
@@ -1176,14 +1249,30 @@ var AlteredCard = {
         return html;
     }
 
+    function loreVal(e, type) {
+        var els = (e && e.elements) || [];
+        for (var k = 0; k < els.length; k++) {
+            var t = els[k].text;
+            if (els[k].type === type && t && t !== '#N/A' && t !== 'N/A') return t;
+        }
+        return '';
+    }
+    // The API can return several entries per language, some with the narrator
+    // and date left empty: keep the most complete one (first wins on a tie).
+    function bestLoreEntry(entries) {
+        var entry = null, best = 0;
+        (entries || []).forEach(function (e) {
+            if (!loreVal(e, 'FLAVOR_TEXT') && !loreVal(e, 'STORY')) return;
+            var score = 1 + (loreVal(e, 'NARRATOR') ? 1 : 0) + (loreVal(e, 'DATE') ? 1 : 0);
+            if (score > best) { entry = e; best = score; }
+        });
+        return entry;
+    }
+
     function renderLore(loreData, l) {
         var entries = (loreData && !Array.isArray(loreData)) ? (loreData[l] || loreData.en || []) : [];
-        var entry = null;
-        for (var i = 0; i < entries.length && !entry; i++) {
-            for (var j = 0; j < (entries[i].elements || []).length; j++) {
-                if (entries[i].elements[j].text) { entry = entries[i]; break; }
-            }
-        }
+        var val = loreVal;
+        var entry = bestLoreEntry(entries);
         if (!entry) return '';
         var html = '<div class="card-altered p-3">';
         (entry.elements || []).forEach(function (el) {
@@ -1192,8 +1281,12 @@ var AlteredCard = {
             var esc = escHtml(t);
             if (el.type === 'FLAVOR_TEXT')  html += '<blockquote style="border-left:3px solid var(--ac-color-border-control);padding-left:1rem;margin:0 0 .75rem 0;color:var(--ac-color-text-2);font-size:.9rem"><em>' + esc + '</em></blockquote>';
             else if (el.type === 'STORY')   html += '<p style="font-size:.88rem;color:var(--ac-color-text-2);line-height:1.65;margin:0 0 .5rem 0">' + esc.replace(/\n/g, '<br>') + '</p>';
-            else if (el.type === 'NARRATOR') html += '<p style="font-size:.8rem;color:var(--ac-color-text-muted);text-align:right;font-style:italic;margin:0">— ' + esc + '</p>';
         });
+        var narrator = val(entry, 'NARRATOR'), date = val(entry, 'DATE');
+        if (narrator || date) {
+            html += '<p style="font-size:.8rem;color:var(--ac-color-text-muted);text-align:right;font-style:italic;margin:0">— '
+                + escHtml([narrator, date].filter(Boolean).join(', ')) + '</p>';
+        }
         return html + '</div>';
     }
 
@@ -1213,6 +1306,39 @@ var AlteredCard = {
         out = out.replace(/\[\]/g,           ' ');
         out = out.replace(/\[(.*?)\]/g,      '<strong>$1</strong>');
         return out;
+    }
+
+    // Lore edit modal (Lore / Admin groups). Always edits EN and FR, whatever the
+    // UI or card language; saving needs an API that does not exist yet.
+    var loreForm = document.getElementById('card-lore-form');
+    if (loreForm) {
+        var LORE_LANGS = ['en', 'fr'];
+        var LORE_FIELDS = { flavor: 'FLAVOR_TEXT', story: 'STORY', narrator: 'NARRATOR', date: 'DATE' };
+        var loreModalEl = document.getElementById('card-lore-modal');
+        var loreMsg = document.getElementById('card-lore-msg');
+        loreModalEl.addEventListener('show.bs.modal', function () {
+            var all = (groupData && groupData.loreEntries && !Array.isArray(groupData.loreEntries)) ? groupData.loreEntries : {};
+            LORE_LANGS.forEach(function (l) {
+                var entry = bestLoreEntry(all[l]);
+                Object.keys(LORE_FIELDS).forEach(function (f) {
+                    document.getElementById('card-lore-' + l + '-' + f).value = entry ? loreVal(entry, LORE_FIELDS[f]) : '';
+                });
+            });
+            loreMsg.style.display = 'none';
+        });
+        loreForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var payload = { ref: ref, lore: {} };
+            LORE_LANGS.forEach(function (l) {
+                payload.lore[l] = {};
+                Object.keys(LORE_FIELDS).forEach(function (f) {
+                    payload.lore[l][f] = document.getElementById('card-lore-' + l + '-' + f).value;
+                });
+            });
+            // TODO: send `payload` once the API exists.
+            loreMsg.textContent = txt.lore_no_api;
+            loreMsg.style.display = '';
+        });
     }
 
     // utility functions
